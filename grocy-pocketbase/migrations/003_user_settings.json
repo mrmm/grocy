@@ -1,0 +1,28 @@
+[
+	{
+		"id": "user_settings",
+		"name": "user_settings",
+		"type": "base",
+		"system": false,
+		"schema": [
+			{
+				"name": "user",
+				"type": "relation",
+				"required": true,
+				"options": {
+					"collectionId": "_pb_users_auth_",
+					"maxSelect": 1,
+					"cascadeDelete": true
+				}
+			},
+			{
+				"name": "settings",
+				"type": "json",
+				"required": true
+			}
+		],
+		"indexes": [
+			"CREATE UNIQUE INDEX idx_user_settings_user ON user_settings (user)"
+		]
+	}
+]

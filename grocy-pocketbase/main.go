@@ -14,6 +14,7 @@ func main() {
 
 	app.OnBeforeServe().Add(func(e *core.ServeEvent) error {
 		hooks.RegisterStockRoutes(app, e)
+		hooks.RegisterUserSettings(app, e)
 		return nil
 	})
 
