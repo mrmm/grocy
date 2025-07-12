@@ -1,57 +1,67 @@
 import { defineStore } from 'pinia';
 import { pb } from '../lib/pb';
 import type { RecordModel } from 'pocketbase';
-
-interface StockState {
-	entries: RecordModel[];
-	totals: Record<string, number>;
-	loading: boolean;
-}
+import { ref, reactive } from 'vue';
 
 interface PurchaseInput {
 	productId: string;
 	amount: number;
 }
 
-export const useStockStore = defineStore('stock', {
-	state: (): StockState => ({
-		entries: [],
-		totals: {},
-		loading: false,
-	}),
-	actions: {
-		async fetch() {
-			if (this.entries.length) return;
-			this.loading = true;
-			this.entries = await pb.collection('stock_entries').getFullList({ expand: 'product' });
-			this.recalculateTotals();
-			this.loading = false;
+interface ConsumeInput {
+	productId: string;
+	amount: number;
+}
 
-			pb.collection('stock_entries').subscribe('*', (e) => {
-				if (e.action === 'delete') {
-					this.entries = this.entries.filter((r) => r.id !== e.record.id);
-				} else {
-					const idx = this.entries.findIndex((r) => r.id === e.record.id);
-					if (idx === -1) this.entries.push(e.record);
-					else this.entries[idx] = e.record;
-				}
-				this.recalculateTotals();
-			});
-		},
-		recalculateTotals() {
-			const map: Record<string, number> = {};
-			for (const entry of this.entries) {
-				const pid = entry.product;
-				map[pid] = (map[pid] || 0) + entry.amount;
+export const useStockStore = defineStore('stock', () => {
+	const entries = ref<RecordModel[]>([]);
+	const loading = ref(false);
+	const totals = reactive<Record<string, number>>({});
+
+	function recalculateTotals() {
+		const map: Record<string, number> = {};
+		for (const entry of entries.value) {
+			const pid = entry.product as string;
+			map[pid] = (map[pid] || 0) + (entry.amount as number);
+		}
+		Object.assign(totals, map);
+	}
+
+	async function fetch() {
+		if (entries.value.length) return;
+		loading.value = true;
+		entries.value = await pb.collection('stock_entries').getFullList({ expand: 'product' });
+		recalculateTotals();
+		loading.value = false;
+
+		pb.collection('stock_entries').subscribe('*', (e) => {
+			const rec = e.record as RecordModel;
+			if (e.action === 'delete') {
+				entries.value = entries.value.filter((r) => r.id !== rec.id);
+			} else {
+				const idx = entries.value.findIndex((r) => r.id === rec.id);
+				if (idx === -1) entries.value.push(rec);
+				else entries.value[idx] = rec;
 			}
-			this.totals = map;
-		},
-		async purchase(input: PurchaseInput) {
-			await fetch(pb.baseUrl + '/stock/purchase', {
-				method: 'POST',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify(input),
-			});
-		},
-	},
+			recalculateTotals();
+		});
+	}
+
+	async function purchase(input: PurchaseInput) {
+		await fetchApi('/stock/purchase', input);
+	}
+
+	async function consume(input: ConsumeInput) {
+		await fetchApi('/stock/consume', input);
+	}
+
+	async function fetchApi(path: string, body: unknown) {
+		await fetch(pb.baseUrl + path, {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify(body),
+		});
+	}
+
+	return { entries, loading, totals, fetch, purchase, consume };
 });

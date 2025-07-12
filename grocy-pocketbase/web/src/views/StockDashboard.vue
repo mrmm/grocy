@@ -3,9 +3,11 @@
     <h1>Stock</h1>
     <ProductList />
 
-    <button class="fab" @click="dialogOpen = true">＋</button>
+    <button class="fab plus" @click="purchaseOpen = true">＋</button>
+    <button class="fab minus" @click="consumeOpen = true">−</button>
 
-    <PurchaseDialog v-if="dialogOpen" @close="dialogOpen = false" />
+    <PurchaseDialog v-if="purchaseOpen" @close="purchaseOpen = false" />
+    <ConsumeDialog v-if="consumeOpen" @close="consumeOpen = false" />
   </main>
 </template>
 
@@ -13,15 +15,16 @@
 import { ref } from 'vue';
 import ProductList from '../components/ProductList.vue';
 import PurchaseDialog from '../components/PurchaseDialog.vue';
+import ConsumeDialog from '../components/ConsumeDialog.vue';
 
-const dialogOpen = ref(false);
+const purchaseOpen = ref(false);
+const consumeOpen = ref(false);
 </script>
 
 <style scoped>
 .fab {
   position: fixed;
   bottom: 2rem;
-  right: 2rem;
   width: 3rem;
   height: 3rem;
   border-radius: 50%;
@@ -33,5 +36,12 @@ const dialogOpen = ref(false);
   justify-content: center;
   border: none;
   cursor: pointer;
+}
+.fab.plus {
+  right: 2rem;
+}
+.fab.minus {
+  right: 6rem;
+  background: #e53e3e;
 }
 </style>

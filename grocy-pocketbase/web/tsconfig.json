@@ -13,8 +13,10 @@
 			"ES2020"
 		],
 		"types": [
-			"vite/client"
-		]
+			"vite/client",
+			"node"
+		],
+		"strictNullChecks": true
 	},
 	"include": [
 		"src/**/*.ts",

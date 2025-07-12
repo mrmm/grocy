@@ -7,29 +7,31 @@ interface ProductsState {
 	loading: boolean;
 }
 
-export const useProductStore = defineStore('products', {
+export const useProductStore = defineStore<'products', ProductsState>({
+	id: 'products',
 	state: (): ProductsState => ({
 		products: [],
 		loading: false,
 	}),
 	actions: {
 		async fetch() {
-			if (this.products.length) return; // cache
+			if (this.products.length) return; // cached
 			this.loading = true;
 			this.products = await pb.collection('products').getFullList({
-				sort: "name",
+				sort: 'name',
 				expand: 'location,qu_stock',
 			});
 			this.loading = false;
 
-			// realtime
+			// realtime updates
 			pb.collection('products').subscribe('*', (e) => {
-				const idx = this.products.findIndex((p) => p.id === e.record.id);
+				const rec = e.record as RecordModel;
+				const idx = this.products.findIndex((p) => p.id === rec.id);
 				if (e.action === 'delete') {
 					if (idx !== -1) this.products.splice(idx, 1);
 				} else {
-					if (idx === -1) this.products.push(e.record);
-					else this.products[idx] = e.record;
+					if (idx === -1) this.products.push(rec);
+					else this.products[idx] = rec;
 				}
 			});
 		},
