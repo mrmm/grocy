@@ -35,6 +35,8 @@ declare module 'pocketbase' {
 		exportToCookie(): string;
 		/** clears token + model */
 		clear(): void;
+		/** subscribe to auth changes */
+		onChange(cb: (token: string, model: AuthModel | null) => void): void;
 	}
 
 	export default class PocketBase {
