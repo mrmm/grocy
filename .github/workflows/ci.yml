@@ -1,0 +1,45 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [ main ]
+
+jobs:
+  backend:
+    name: Go backend
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.22.4'
+      - name: Vet & test
+        run: |
+          cd grocy-pocketbase
+          go vet ./...
+          go test ./...
+
+  frontend:
+    name: Web (TypeScript + Vitest)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20.11.0'
+          cache: 'npm'
+      - name: Install deps
+        run: |
+          cd grocy-pocketbase/web
+          npm ci
+      - name: Type check (strict)
+        run: |
+          cd grocy-pocketbase/web
+          npx tsc --noEmit
+      - name: Unit tests
+        run: |
+          cd grocy-pocketbase/web
+          npm run test -- --run
