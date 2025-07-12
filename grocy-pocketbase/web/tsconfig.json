@@ -3,6 +3,7 @@
 		"target": "ES2020",
 		"module": "ESNext",
 		"moduleResolution": "Node",
+		"baseUrl": "./",
 		"strict": true,
 		"jsx": "preserve",
 		"sourceMap": true,
@@ -14,13 +15,19 @@
 		],
 		"types": [
 			"vite/client",
-			"node"
+			"node",
+			"vitest"
 		],
 		"strict": true,
 		"noImplicitAny": true,
 		"strictNullChecks": true,
 		"resolveJsonModule": true,
-		"skipLibCheck": true
+		"skipLibCheck": true,
+		"paths": {
+			"@/*": [
+				"src/*"
+			]
+		}
 	},
 	"include": [
 		"src/**/*.ts",
