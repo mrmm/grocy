@@ -4,33 +4,30 @@
 		"module": "ESNext",
 		"moduleResolution": "Node",
 		"baseUrl": "./",
-		"strict": true,
 		"jsx": "preserve",
 		"sourceMap": true,
-		"resolveJsonModule": true,
-		"esModuleInterop": true,
 		"lib": [
 			"DOM",
 			"ES2020"
 		],
-		"types": [
-			"vite/client",
-			"node",
-			"vitest"
-		],
-		"strict": true,
-		"noImplicitAny": true,
-		"strictNullChecks": true,
-		"resolveJsonModule": true,
-		"skipLibCheck": true,
 		"paths": {
 			"@/*": [
 				"src/*"
 			]
-		}
+		},
+		"types": [
+			"vite/client",
+			"node"
+		],
+		"strict": true,
+		"noImplicitAny": true,
+		"resolveJsonModule": true,
+		"esModuleInterop": true,
+		"skipLibCheck": true
 	},
 	"include": [
 		"src/**/*.ts",
-		"src/**/*.vue"
+		"src/**/*.vue",
+		"tests"
 	]
 }
