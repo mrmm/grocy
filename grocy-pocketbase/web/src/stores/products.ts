@@ -5,6 +5,7 @@ import type { RecordModel } from 'pocketbase';
 interface ProductsState {
 	products: RecordModel[];
 	loading: boolean;
+	error: string | null;
 }
 
 export const useProductStore = defineStore<'products', ProductsState>({
@@ -12,16 +13,23 @@ export const useProductStore = defineStore<'products', ProductsState>({
 	state: (): ProductsState => ({
 		products: [],
 		loading: false,
+		error: null,
 	}),
 	actions: {
 		async fetch() {
 			if (this.products.length) return; // cached
 			this.loading = true;
-			this.products = await pb.collection('products').getFullList({
-				sort: 'name',
-				expand: 'location,qu_stock',
-			});
-			this.loading = false;
+			try {
+				this.products = await pb.collection('products').getFullList({
+					sort: 'name',
+					expand: 'location,qu_stock',
+				});
+				this.error = null;
+			} catch (err) {
+				this.error = (err as Error).message;
+			} finally {
+				this.loading = false;
+			}
 
 			// realtime updates
 			pb.collection('products').subscribe('*', (e) => {
