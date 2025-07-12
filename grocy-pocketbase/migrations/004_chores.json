@@ -1,0 +1,56 @@
+[
+	{
+		"id": "chores",
+		"name": "chores",
+		"type": "base",
+		"system": false,
+		"schema": [
+			{
+				"name": "name",
+				"type": "text",
+				"required": true
+			},
+			{
+				"name": "period_type",
+				"type": "text",
+				"required": true,
+				"options": {
+					"maxLength": 10
+				}
+			},
+			{
+				"name": "period_config",
+				"type": "number",
+				"required": true
+			},
+			{
+				"name": "next_execution",
+				"type": "date",
+				"required": false
+			}
+		]
+	},
+	{
+		"id": "chores_log",
+		"name": "chores_log",
+		"type": "base",
+		"system": false,
+		"schema": [
+			{
+				"name": "chore",
+				"type": "relation",
+				"required": true,
+				"options": {
+					"collectionId": "chores",
+					"maxSelect": 1,
+					"cascadeDelete": true
+				}
+			},
+			{
+				"name": "done_time",
+				"type": "date",
+				"required": true
+			}
+		]
+	}
+]
