@@ -22,7 +22,7 @@ export const useChoresStore = defineStore('chores', () => {
 			chores.value = await pb.collection('chores').getFullList<Chore>({ sort: "name" });
 			pb.collection('chores').unsubscribe("*");
 			pb.collection('chores').subscribe<Chore>('*', (e) => {
-				const idx = chores.value.findIndex(c => c.id === e.record.id);
+				const idx = chores.value.findIndex((c: Chore) => c.id === e.record.id);
 				if (e.action === 'delete') {
 					if (idx !== -1) chores.value.splice(idx, 1);
 				} else {
