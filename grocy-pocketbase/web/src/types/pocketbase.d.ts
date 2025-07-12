@@ -22,13 +22,25 @@ declare module 'pocketbase' {
 		totalItems: number;
 	}
 
+	export interface AuthStore {
+		/** currently authenticated user model */
+		model: AuthModel | null;
+		/** raw JWT token string */
+		token: string;
+		/** true when token & model set */
+		isValid: boolean;
+		/** replace current state with cookie string obtained from exportToCookie */
+		loadFromCookie(cookie: string): void;
+		/** serialise current state for storage */
+		exportToCookie(): string;
+		/** clears token + model */
+		clear(): void;
+	}
+
 	export default class PocketBase {
 		constructor(url: string);
-		readonly authStore: {
-			model: AuthModel | null;
-			clear(): void;
-		};
-		collection(name: string): {
+		readonly authStore: AuthStore;
+		collection<Name extends string>(name: Name): {
 			getFullList<T extends RecordModel>(opts?: any): Promise<T[]>;
 			getList<T extends RecordModel>(page: number, perPage: number, opts?: any): Promise<ListResult<T>>;
 			authWithPassword(email: string, password: string): Promise<void>;

@@ -14,8 +14,7 @@
 		],
 		"types": [
 			"vite/client",
-			"node",
-			"vue"
+			"node"
 		],
 		"strict": true,
 		"noImplicitAny": true,
