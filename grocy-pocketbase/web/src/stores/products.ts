@@ -23,7 +23,7 @@ export const useProductStore = defineStore('products', () => {
 		}
 
 		pb.collection('products').unsubscribe('*');
-		pb.collection('products').subscribe('*', (e) => {
+		pb.collection('products').subscribe('*', (e: { action: string; record: RecordModel }) => {
 			const rec = e.record as RecordModel;
 			const idx = products.value.findIndex((p) => p.id === rec.id);
 			if (e.action === 'delete') {

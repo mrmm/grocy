@@ -34,7 +34,7 @@ export const useStockStore = defineStore('stock', () => {
 		recalculateTotals();
 		loading.value = false;
 
-		pb.collection('stock_entries').subscribe('*', (e) => {
+		pb.collection('stock_entries').subscribe('*', (e: { action: string; record: RecordModel }) => {
 			const rec = e.record as RecordModel;
 			if (e.action === 'delete') {
 				entries.value = entries.value.filter((r) => r.id !== rec.id);

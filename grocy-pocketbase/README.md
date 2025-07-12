@@ -40,6 +40,32 @@ npm run dev  # http://localhost:5173
 
 The app expects the PocketBase backend to run on `http://127.0.0.1:8090`. Override with `VITE_PB_URL` env var.
 
+### Running tests
+
+Unit tests are powered by [Vitest](https://vitest.dev/):
+
+```bash
+cd grocy-pocketbase/web
+npm run test     # headless run
+npm run test:ui  # interactive UI
+```
+
+E2E placeholder with Cypress:
+
+```bash
+npm run e2e
+```
+
+### Environment variables
+
+Create a `.env` file inside `web` to override defaults:
+
+```
+VITE_PB_URL=http://127.0.0.1:8090
+```
+
+*(If not set the app assumes the frontend is served by the same origin as PocketBase.)*
+
 ### Module overview
 - `src/stores/*` – Pinia stores (products, stock)
 - `src/components/*` – UI components
