@@ -12,11 +12,12 @@ import (
 func main() {
 	app := pocketbase.New()
 
-	app.OnBeforeServe().Add(func(e *core.ServeEvent) error {
-		hooks.RegisterStockRoutes(app, e)
+	app.OnServe().BindFunc(func(e *core.ServeEvent) error {
+		hooks.RegisterStockHooks(app)
 		hooks.RegisterUserSettings(app, e)
 		hooks.RegisterChores(app, e)
-		return nil
+		hooks.RegisterBatteries(app, e)
+		return e.Next()
 	})
 
 	if err := app.Start(); err != nil {

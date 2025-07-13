@@ -56,7 +56,7 @@ export const useStockStore = defineStore('stock', () => {
 	}
 
 	async function fetchApi(path: string, body: unknown) {
-		await fetch(pb.baseUrl + path, {
+		await window.fetch(path, {
 			method: 'POST',
 			headers: { 'Content-Type': 'application/json' },
 			body: JSON.stringify(body),

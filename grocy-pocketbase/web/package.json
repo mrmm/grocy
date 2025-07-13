@@ -13,30 +13,24 @@
 		"lint:types": "npm run type"
 	},
 	"dependencies": {
-		"vue": "^3.4.0",
 		"pinia": "^2.1.6",
-		"vue-router": "^4.2.5",
-		"pocketbase": "^0.21.0"
+		"pocketbase": "^0.26.1",
+		"vue": "^3.4.0",
+		"vue-router": "^4.2.5"
 	},
 	"devDependencies": {
-		"@vitejs/plugin-vue": "^4.5.0",
-		"@vue/tsconfig": "^0.2.0",
+		"@pinia/testing": "^0.1.5",
+		"@testing-library/jest-dom": "^6.0.0",
+		"@testing-library/vue": "^7.0.0",
 		"@types/node": "^20.9.0",
 		"@types/testing-library__jest-dom": "^6.0.0",
-		"@types/testing-library__vue": "^7.0.2",
-		"@types/vue-router": "^4.1.0",
-		"@types/lodash": "^4.14.195",
-		"vitest": "^1.0.0",
+		"@vitejs/plugin-vue": "^4.5.0",
 		"@vue/test-utils": "^2.4.1",
-		"@testing-library/vue": "^9.3.0",
-		"@testing-library/jest-dom": "^6.0.0",
-		"@pinia/testing": "^0.1.5",
+		"@vue/tsconfig": "^0.2.0",
 		"cypress": "^13.6.4",
+		"jsdom": "^26.1.0",
 		"typescript": "^5.3.3",
 		"vite": "^5.0.7",
-		"@types/vite": "^4.0.0",
-		"@types/vue": "^3.2.25",
-		"@types/pinia": "^2.0.0",
-		"@types/vitest": "^0.0.4"
+		"vitest": "^1.0.0"
 	}
 }

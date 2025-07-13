@@ -40,7 +40,7 @@ export const useChoresStore = defineStore('chores', () => {
 
 	async function execute(id: string) {
 		try {
-			await fetch(`/chores/${id}/execute`, { method: 'POST' });
+			await window.fetch(`/chores/${id}/execute`, { method: 'POST' });
 		} catch (err) {
 			console.error(err);
 		}

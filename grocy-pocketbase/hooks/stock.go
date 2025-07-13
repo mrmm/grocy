@@ -1,149 +1,144 @@
 package hooks
 
 import (
+	"encoding/json"
+	"errors"
 	"net/http"
 	"time"
 
-	"github.com/labstack/echo/v5"
-	"github.com/pocketbase/dbx"
 	"github.com/pocketbase/pocketbase"
 	"github.com/pocketbase/pocketbase/core"
-	"github.com/pocketbase/pocketbase/daos"
-	"github.com/pocketbase/pocketbase/models"
 )
 
-// purchasePayload represents the expected body for /stock/purchase
 type purchasePayload struct {
-	ProductId  string  `json:"productId"`
-	Amount     float64 `json:"amount"`
-	LocationId string  `json:"locationId"`
-	BestBefore string  `json:"bestBefore"`
-}
-
-type consumePayload struct {
-	ProductId string  `json:"productId"`
+	ProductID string  `json:"product_id"`
 	Amount    float64 `json:"amount"`
+	Price     float64 `json:"price"`
 }
 
-func RegisterStockRoutes(app *pocketbase.PocketBase, e *core.ServeEvent) {
-	e.Router.POST("/stock/purchase", func(c echo.Context) error {
-		var body purchasePayload
-		if err := c.Bind(&body); err != nil {
-			return echo.NewHTTPError(http.StatusBadRequest, err.Error())
-		}
+func RegisterStockHooks(app *pocketbase.PocketBase) {
+	app.OnServe().BindFunc(func(e *core.ServeEvent) error {
+		e.Router.POST("/stock/purchase", func(re *core.RequestEvent) error {
+			var body purchasePayload
+			if err := json.NewDecoder(re.Request.Body).Decode(&body); err != nil {
+				return re.String(http.StatusBadRequest, `{"error": "`+err.Error()+`"}`)
+			}
 
-		if body.Amount <= 0 {
-			return echo.NewHTTPError(http.StatusBadRequest, "amount must be > 0")
-		}
+			if body.Amount <= 0 {
+				return re.String(http.StatusBadRequest, `{"error": "amount must be > 0"}`)
+			}
 
-		// optional best-before parsing
-		var bestBefore time.Time
-		if body.BestBefore != "" {
-			t, err := time.Parse("2006-01-02", body.BestBefore)
+			// Get collection from app
+			stockCollection, err := re.App.FindCollectionByNameOrId("stock_entries")
 			if err != nil {
-				return echo.NewHTTPError(http.StatusBadRequest, "bestBefore must be YYYY-MM-DD")
-			}
-			bestBefore = t
-		}
-
-		dao := app.Dao()
-		err := dao.RunInTransaction(func(txDao *daos.Dao) error {
-			entry := models.NewRecord("stock_entries")
-			entry.Set("product", body.ProductId)
-			entry.Set("location", body.LocationId)
-			entry.Set("amount", body.Amount)
-			if !bestBefore.IsZero() {
-				entry.Set("best_before", bestBefore)
-			}
-			entry.Set("purchased_date", time.Now())
-
-			if err := txDao.SaveRecord(entry); err != nil {
-				return err
+				return re.String(http.StatusInternalServerError, `{"error": "`+err.Error()+`"}`)
 			}
 
-			logRec := models.NewRecord("stock_log")
-			logRec.Set("timestamp", time.Now())
-			logRec.Set("type", "PURCHASE")
-			logRec.Set("product", body.ProductId)
-			logRec.Set("amount", body.Amount)
+			err = re.App.RunInTransaction(func(txApp core.App) error {
+				entry := core.NewRecord(stockCollection)
+				entry.Set("product_id", body.ProductID)
+				entry.Set("amount", body.Amount)
+				entry.Set("price", body.Price)
+				entry.Set("purchased_date", time.Now())
 
-			return txDao.SaveRecord(logRec)
-		})
-
-		if err != nil {
-			return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
-		}
-
-		return c.JSON(http.StatusOK, map[string]any{"status": "ok"})
-	})
-
-	e.Router.POST("/stock/consume", func(c echo.Context) error {
-		var body consumePayload
-		if err := c.Bind(&body); err != nil {
-			return echo.NewHTTPError(http.StatusBadRequest, err.Error())
-		}
-
-		if body.Amount <= 0 {
-			return echo.NewHTTPError(http.StatusBadRequest, "amount must be > 0")
-		}
-
-		dao := app.Dao()
-
-		// helper closure that returns error so we can handle custom message
-		err := dao.RunInTransaction(func(txDao *daos.Dao) error {
-			remain := body.Amount
-
-			// select entries FIFO by purchased_date asc
-			entries := []*models.Record{}
-			txDao.DB().Select().
-				From("stock_entries").
-				Where(dbx.HashExp{"product": body.ProductId}).
-				OrderBy("purchased_date ASC").
-				All(&entries)
-
-			for _, rec := range entries {
-				amt := rec.GetFloat("amount")
-				if amt >= remain {
-					rec.Set("amount", amt-remain)
-					if rec.GetFloat("amount") == 0 {
-						if err := txDao.DeleteRecord(rec); err != nil {
-							return err
-						}
-					} else {
-						if err := txDao.SaveRecord(rec); err != nil {
-							return err
-						}
-					}
-					remain = 0
-					break
-				} else {
-					remain -= amt
-					if err := txDao.DeleteRecord(rec); err != nil {
-						return err
-					}
+				if err := txApp.Save(entry); err != nil {
+					return err
 				}
+
+				// Update product stock
+				product, err := txApp.FindRecordById("products", body.ProductID)
+				if err != nil {
+					return err
+				}
+
+				currentStock := product.GetFloat("stock_amount")
+				product.Set("stock_amount", currentStock+body.Amount)
+
+				return txApp.Save(product)
+			})
+
+			if err != nil {
+				return re.String(http.StatusInternalServerError, `{"error": "`+err.Error()+`"}`)
 			}
 
-			if remain > 0 {
-				return echo.NewHTTPError(http.StatusBadRequest, "not enough stock")
-			}
-
-			logRec := models.NewRecord("stock_log")
-			logRec.Set("timestamp", time.Now())
-			logRec.Set("type", "CONSUME")
-			logRec.Set("product", body.ProductId)
-			logRec.Set("amount", -body.Amount)
-
-			return txDao.SaveRecord(logRec)
+			return re.String(http.StatusOK, `{"success": true}`)
 		})
 
-		if err != nil {
-			if he, ok := err.(*echo.HTTPError); ok {
-				return he
+		e.Router.POST("/stock/consume", func(re *core.RequestEvent) error {
+			var body purchasePayload
+			if err := json.NewDecoder(re.Request.Body).Decode(&body); err != nil {
+				return re.String(http.StatusBadRequest, `{"error": "`+err.Error()+`"}`)
 			}
-			return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
-		}
 
-		return c.JSON(http.StatusOK, map[string]any{"status": "ok"})
+			if body.Amount <= 0 {
+				return re.String(http.StatusBadRequest, `{"error": "amount must be > 0"}`)
+			}
+
+			// Get collection from app
+			stockCollection, err := re.App.FindCollectionByNameOrId("stock_entries")
+			if err != nil {
+				return re.String(http.StatusInternalServerError, `{"error": "`+err.Error()+`"}`)
+			}
+
+			err = re.App.RunInTransaction(func(txApp core.App) error {
+				// Check current stock
+				product, err := txApp.FindRecordById("products", body.ProductID)
+				if err != nil {
+					return err
+				}
+
+				currentStock := product.GetFloat("stock_amount")
+				if currentStock < body.Amount {
+					return errors.New("insufficient stock")
+				}
+
+				// Create consumption entry
+				entry := core.NewRecord(stockCollection)
+				entry.Set("product_id", body.ProductID)
+				entry.Set("amount", -body.Amount) // Negative for consumption
+				entry.Set("consumed_date", time.Now())
+
+				if err := txApp.Save(entry); err != nil {
+					return err
+				}
+
+				// Update product stock
+				product.Set("stock_amount", currentStock-body.Amount)
+				return txApp.Save(product)
+			})
+
+			if err != nil {
+				return re.String(http.StatusInternalServerError, `{"error": "`+err.Error()+`"}`)
+			}
+
+			return re.String(http.StatusOK, `{"success": true}`)
+		})
+
+		e.Router.GET("/stock/products", func(re *core.RequestEvent) error {
+			records, err := re.App.FindRecordsByFilter("products", "", "", 0, 0)
+			if err != nil {
+				return re.String(http.StatusInternalServerError, `{"error": "`+err.Error()+`"}`)
+			}
+
+			var products []map[string]any
+			for _, record := range records {
+				products = append(products, map[string]any{
+					"id":           record.Id,
+					"name":         record.GetString("name"),
+					"stock_amount": record.GetFloat("stock_amount"),
+					"min_stock":    record.GetFloat("min_stock"),
+				})
+			}
+
+			// Convert to JSON manually
+			jsonData, err := json.Marshal(products)
+			if err != nil {
+				return re.String(http.StatusInternalServerError, `{"error": "`+err.Error()+`"}`)
+			}
+
+			return re.String(http.StatusOK, string(jsonData))
+		})
+
+		return e.Next()
 	})
 }
