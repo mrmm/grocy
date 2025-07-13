@@ -1,0 +1,7 @@
+[tools]
+node = "20.11.0"  # LTS at 2025-07
+go   = "1.22.4"   # Latest stable Go
+
+[env]
+# Ensure PocketBase runs on the same port during dev
+POCKETBASE_URL = "http://127.0.0.1:8090"

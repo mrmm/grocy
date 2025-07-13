@@ -1,0 +1,187 @@
+[
+	{
+		"id": "quantity_units",
+		"name": "quantity_units",
+		"type": "base",
+		"system": false,
+		"schema": [
+			{
+				"name": "name",
+				"type": "text",
+				"required": true,
+				"unique": true
+			},
+			{
+				"name": "name_plural",
+				"type": "text",
+				"required": true
+			},
+			{
+				"name": "plural_forms",
+				"type": "text",
+				"required": false
+			}
+		],
+		"createRule": "@admin",
+		"updateRule": "@admin",
+		"deleteRule": "@admin"
+	},
+	{
+		"id": "locations",
+		"name": "locations",
+		"type": "base",
+		"system": false,
+		"schema": [
+			{
+				"name": "name",
+				"type": "text",
+				"required": true,
+				"unique": true
+			},
+			{
+				"name": "is_freezer",
+				"type": "bool",
+				"required": false
+			}
+		],
+		"createRule": "@admin",
+		"updateRule": "@admin",
+		"deleteRule": "@admin"
+	},
+	{
+		"id": "products",
+		"name": "products",
+		"type": "base",
+		"system": false,
+		"schema": [
+			{
+				"name": "name",
+				"type": "text",
+				"required": true
+			},
+			{
+				"name": "description",
+				"type": "text"
+			},
+			{
+				"name": "location",
+				"type": "relation",
+				"options": {
+					"collectionId": "locations"
+				},
+				"required": true
+			},
+			{
+				"name": "qu_stock",
+				"type": "relation",
+				"options": {
+					"collectionId": "quantity_units"
+				},
+				"required": true
+			},
+			{
+				"name": "min_stock_amount",
+				"type": "number",
+				"options": {
+					"min": 0
+				}
+			},
+			{
+				"name": "picture",
+				"type": "file",
+				"options": {
+					"maxSelect": 1,
+					"mimeTypes": [
+						"image/*"
+					]
+				}
+			}
+		],
+		"createRule": "@admin",
+		"updateRule": "@admin",
+		"deleteRule": "@admin"
+	},
+	{
+		"id": "stock_entries",
+		"name": "stock_entries",
+		"type": "base",
+		"system": false,
+		"schema": [
+			{
+				"name": "product",
+				"type": "relation",
+				"options": {
+					"collectionId": "products"
+				},
+				"required": true
+			},
+			{
+				"name": "location",
+				"type": "relation",
+				"options": {
+					"collectionId": "locations"
+				},
+				"required": true
+			},
+			{
+				"name": "amount",
+				"type": "number",
+				"required": true
+			},
+			{
+				"name": "best_before",
+				"type": "date"
+			},
+			{
+				"name": "purchased_date",
+				"type": "date"
+			},
+			{
+				"name": "open",
+				"type": "bool"
+			}
+		],
+		"createRule": "@auth",
+		"updateRule": "@auth",
+		"deleteRule": null
+	},
+	{
+		"id": "stock_log",
+		"name": "stock_log",
+		"type": "base",
+		"system": false,
+		"schema": [
+			{
+				"name": "timestamp",
+				"type": "date",
+				"required": true
+			},
+			{
+				"name": "type",
+				"type": "text",
+				"required": true
+			},
+			{
+				"name": "product",
+				"type": "relation",
+				"options": {
+					"collectionId": "products"
+				},
+				"required": true
+			},
+			{
+				"name": "amount",
+				"type": "number",
+				"required": true
+			},
+			{
+				"name": "note",
+				"type": "text"
+			}
+		],
+		"createRule": null,
+		"updateRule": null,
+		"deleteRule": null,
+		"listRule": "@admin"
+	}
+]
